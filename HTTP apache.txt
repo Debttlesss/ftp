@@ -1,0 +1,114 @@
+#!/bin/bash
+
+sudo apt -y install apache2 
+apt-get -y update  
+
+
+#version
+read -p "Quieres ver la version de apache? (y)es (N)o: " version
+
+if [ "$version" = "y" ]; then
+    apache2 -v
+
+else
+    read "No se mostrara entonces"
+fi
+
+
+# UFW #
+
+# INSTALACION :
+
+# 1. Acceso al directorio /etc/apache2:
+
+# echo "Una vez instalado, puedes acceder al directorio /etc/apache2 donde se encuentran los archivos de configuración y directorios propios de Apache."
+
+# 2. Verificación de la versión de Apache:
+
+apache2 -v
+
+# También puedes consultar el estado del servicio:
+
+systemctl status apache2.service
+
+# 3. Directorios importantes:
+
+# - sites-available y sites-enabled: Almacenan la configuración de los servidores virtuales.
+# - /var/www: Directorio donde se alojan físicamente los sitios web.
+
+# 4. Modificación de la página web predeterminada:
+
+En el directorio /var/www/html se encuentra index.html, la página web predeterminada. Para modificarla, primero haz una copia de seguridad y luego crea una nueva página.
+
+# cp index.html index.html.original
+# rm index.html
+# nano index.html
+
+
+# /var/www/INDEX # 
+
+mv /var/www/index.html /var/www/index.html_original
+
+5. Creación de servidores virtuales:
+
+Vamos a crear dos sitios distintos: www.starwars.edu y www.startrek.edu.
+
+En el directorio /etc/apache2/sites-available, crea el archivo www.starwars.edu.conf con la configuración del servidor virtual.
+
+Crear archivo de configuracion de la pagina web, cuyo nombre sera la direccion de la pagina 'www.starwars.edu' + '.conf'
+
+#Editar archivo
+
+<VirtualHost *:80>
+    DocumentRoot "/var/www/"$nombredominio"
+    ServerName www."$nombredominio"".""$nombreextension"
+    <Directory "/var/www/"$nombredominio">
+       allow from all
+       Options None
+       Require all granted
+    </Directory>
+    Directoryindex index.html
+</VirtualHost>
+
+
+
+6. HABILITAR EL SITIO:
+
+Para que el nuevo sitio esté habilitado, ejecuta:
+
+ a2ensite www."$nombredominio"".""$nombreextension".conf
+
+Este comando crea un enlace simbólico en el directorio /etc/apache2/sites-enabled.
+
+systemctl reload apache2
+
+7. REDIRECCION A PAGINA WEB
+
+7.1 RR
+
+Archivo acabado en .db q no encuentro
+
+
+
+7.2 DE FORMA LOCAL
+Archivo 'etc/hosts'
+
+#Anado
+    192.168.20.100 www."$nombredominio"".""$nombreextension"
+
+
+
+7.3 A TODOS LOS DE LA RED INTERNA
+Archivo '/etc/bind/named.conf.local'
+
+#Crear zona directa
+    zone "$nombredominio"".""$nombreextension" IN {
+    type master;
+    file "/etc/bind/zona.directa";
+    };
+
+    zone "10.168.192.in-addr.arpa" IN {
+    type master;
+    file "/etc/bind/zona.inversa";
+    };
+
