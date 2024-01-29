@@ -1,0 +1,136 @@
+!/bin/bash
+
+sudo apt -y install apache2 
+apt-get -y update  
+
+
+#version
+read -p "Quieres ver la version de apache? (y)es (N)o: " version
+
+if [ "$version" = "y" ]; then
+    apache2 -v
+
+else
+    read "No se mostrara entonces"
+fi
+
+
+#  #
+read -p "Como se llamara tu sitio web? " nombredominio
+read -p "Que extension tendra tu sitio web? " nombreextension
+
+
+# INSTALACION :
+
+
+l1="<VirtualHost *:80>"
+l2="    DocumentRoot /var/www/$nombredominio"
+l3="    ServerName www.$nombredominio.$nombreextension"
+l4="    <Directory /var/www/$nombredominio>"
+l5="       allow from all"
+l6="       Options None"
+l7="       Require all granted"
+l8="    </Directory>"
+l9="    Directoryindex index.html"
+l0="</VirtualHost>"
+
+
+
+
+# 1. Acceso al directorio /etc/apache2:
+
+ echo "Una vez instalado, puedes acceder al directorio /etc/apache2 donde se encuentran los archivos de configuración y directorios propios de Apache."
+
+# 2. Verificación de la versión de Apache:
+
+
+
+# También puedes consultar el estado del servicio:
+
+systemctl status apache2.service
+
+# 3. Directorios importantes:
+
+# - sites-available y sites-enabled: Almacenan la configuración de los servidores virtuales.
+# - /var/www: Directorio donde se alojan físicamente los sitios web.
+
+# 4. Modificación de la página web predeterminada:
+
+read -p "En el directorio /var/www/html se encuentra index.html, la página web predeterminada. Para modificarla, primero haz una copia de seguridad y luego crea una nueva página."
+
+# cp index.html index.html.original
+# rm index.html
+# nano index.html
+
+
+# /var/www/INDEX # 
+
+mv /var/www/index.html /var/www/index.html_original
+
+#5. Creación de servidores virtuales:
+
+#Vamos a crear dos sitios distintos: www.starwars.edu y www.startrek.edu.
+
+#En el directorio /etc/apache2/sites-available, crea el archivo www.starwars.edu.conf con la configuración del servidor virtual.
+
+#Crear archivo de configuracion de la pagina web, cuyo nombre sera la direccion de la pagina 'www.starwars.edu' + '.conf'
+
+#Editar archivo
+
+#anadir sitio web disponible
+read -p "Quieres anadir un nuevo sitio web disponible? (y)es (N)o: " nuevositioweb
+
+if [ "$nuevositioweb" = "y" ]; then
+    echo -e "$l1\n$l2\n$l3\n$l4\n$l5\n$l6\n$l7\n$l8\n$l9\n$l0" > /etc/apache2/sites-available/
+
+else
+    read "No se ha ananido"
+fi
+
+
+
+
+#6. HABILITAR EL SITIO:
+
+#Para que el nuevo sitio esté habilitado, ejecuta:
+read -p "vas a habilitar el nuevo sitio web"
+a2ensite www."$nombredominio"".""$nombreextension".conf
+
+#reiniciamos el servicio
+systemctl reload apache2
+
+
+
+
+#7. REDIRECCION A PAGINA WEB
+
+#7.1 RR
+
+#Archivo acabado en .db q no encuentro
+
+
+
+#7.2 DE FORMA LOCAL
+read -p "dentro del archivo 'etc/hosts' tienes que anadir 192.168.20.TUIP www.$nombredominio.$nombreextension"
+echo read -p " 192.168.20.TUIP www.$nombredominio.$nombreextension" >> enetchosts
+
+#Anado
+
+
+
+#7.3 A TODOS LOS DE LA RED INTERNA
+read -p "dentro del archivo '/etc/bind/named.conf.local' tienes que copiar el fichero 'zonas'"
+
+#Crear zona directa
+l11="zone $nombredominio.$nombreextension IN {"
+l12="type master;"
+l13="file /etc/bind/zona.directa;"
+l14="};"
+l15=""
+l16="zone 10.168.192.in-addr.arpa IN {"
+l17="type master;"
+l18="file /etc/bind/zona.inversa;"
+l19="};"
+
+
+echo -e "$l11\n$l12\n$l13\n$l14\n$l15\n$l16\n$l17\n$l18\n$l19" > zonas
