@@ -81,7 +81,7 @@ mv /var/www/index.html /var/www/index.html_original
 read -p "Quieres anadir un nuevo sitio web disponible? (y)es (N)o: " nuevositioweb
 
 if [ "$nuevositioweb" = "y" ]; then
-    echo -e "$l1\n$l2\n$l3\n$l4\n$l5\n$l6\n$l7\n$l8\n$l9\n$l0" > /etc/apache2/sites-available/
+    echo -e "$l1\n$l2\n$l3\n$l4\n$l5\n$l6\n$l7\n$l8\n$l9\n$l0" > /etc/apache2/sites-available/000-default.conf
 
 else
     read "No se ha ananido"
