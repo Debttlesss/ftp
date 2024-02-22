@@ -1,0 +1,470 @@
+EXAMEN
+HTTP
+sudo apt-get install apache2
+1.- ESTABLECE QUE EL SERVIDOR SOLO ESCUCHA POR EL PUERTO 8080
+sudo nano /etc/apache2/ports.conf
+ Listen 80 → listen 8080
+
+
+
+2.- QUIERO CREAR EL SITIO WEB WWW.WEBPEPEGOMEZ.TIC.SA SIGUIENDO ESTAS DIRECTRICES:
+
+A)El directorio donde se ubica el sitio web se llamará webpepegomez
+sudo mkdir /var/www/html/webpepegomez
+
+B) El fichero de entrada al sitio se denominará inicio html y tendrá una página de inicio muy simple
+cd /var/www/html/webpepegomez
+sudo nano inicio.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Web de Pepe Gomez</title>
+</head>
+<body>
+    <h1>Bienvenido a mi sitio web</h1>
+    <p>Este es un sitio web muy simple creado por Pepe Gomez.</p>
+</body>
+</html>
+C) El fichero de configuracion del sitio web sera www.webpepegomez.tic.sa
+sudo nano /etc/apache2/sites-available/www.webpepegomez.tic.sa.conf
+O
+cd /etc/apache2/sites-available/
+cp 00<TAB> www.webpepegomez.tic.sa.conf
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@webpepegomez.tic.sa
+    ServerName www.webpepegomez.tic.sa
+    DocumentRoot /var/www/html/webpepegomez
+    ErrorLog ${APACHE_LOG_DIR}/webpepegomez_error.log
+    CustomLog ${APACHE_LOG_DIR}/webpepegomez_access.log combined
+</VirtualHost>
+Habilitamos el sitio:
+sudo a2ensite www.webpepegomez.tic.sa.conf
+
+3.- ACTIVA EL SITIO WEB Y COMPRUEBA QUE ES ACCESIBLE DESDE UN CLIENTE. LA RESOLUCIÓN DE NOMBRES DE HARÁ EN EL FICHERO /ETC/HOSTS
+sudo nano /etc/hosts
+127.0.0.1    www.webpepegomez.tic.sa
+
+Activamos el sitio: sudo a2ensite www.webpepegomez.tic.sa.conf
+
+(EN EL CLIENTE)
+sudo nano /etc/hosts
+<IP_del_servidor>    www.webpepegomez.tic.sa
+
+4.- INSTALA EL PAQUETE DE UTILIDADES DE APACHE
+sudo apt install apache2-utils
+
+
+5.- CREA EL ARCHIVO DE CONTRASEÑAS CON USUARIOS PARA APACHE INCLUYENDO AL USUARIO TONIPELAEZ CON CONTRASEÑA TONIPELAEZ
+sudo htpasswd -c /etc/apache2/contraseñas tonipelaez
+
+6.- CONFIGURA LA AUTENTICACIÓN BÁSICA, INCLUYENDO LAS DIRECTIVAS EN EL DIRECTORIO VIRTUAL 'AUTHTYPE' (AUTENTICACION BASICA ), 'AUTHNAME' (DAR NOMBRE A LA AUTENTICACIÓN) AUTHUSERFILE (INDICAR FICHERO DE USUARIOS APACHE2) REQUIRE (INDICA QUE SE REQUIEREN USUARIOS VÁLIDOS)
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@webpepegomez.tic.sa
+    ServerName www.webpepegomez.tic.sa
+    DocumentRoot /var/www/html/webpepegomez
+    ErrorLog ${APACHE_LOG_DIR}/webpepegomez_error.log
+    CustomLog ${APACHE_LOG_DIR}/webpepegomez_access.log combined
+
+    <Directory /var/www/html/webpepegomez>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride All
+        Order allow,deny
+        allow from all
+
+        AuthType Basic
+        AuthName "No podrás pasar"
+        AuthUserFile /etc/apache2/htpasswd
+        Require valid-user
+    </Directory>
+</VirtualHost>
+
+
+
+
+
+
+
+
+
+—-------------------------------------------------------------------------------------------------
+FTP
+sudo apt-get install vsftpd
+sudo nano /etc/vsftpd.conf
+1.- CONFIGURACIÓN INICIAL
+A)Modo pasivo de puertos 4000 a 5000.
+# Modo pasivo
+pasv_enable=YES
+pasv_min_port=4000
+pasv_max_port=5000
+
+B)Enjaular al usuario.
+# Enjaular a los usuarios
+chroot_local_user=YES
+allow_writeable_chroot=YES
+
+
+C) Tiempo máximo de conexión sin actividad 4 minutos. Tiempo máximo de conexión para envío/recepción de datos de 1 minuto.
+# Tiempo máximo sin conectividad
+idle_session_timeout=240
+
+# Tiempo máximo sin conexión para transmisión de datos
+data_connection_timeout=60
+
+
+D) Permite conexión anónima permitiendo únicamente tráfico de bajada del servidor a 100KB/s.
+# Activar modo anónimo
+anonymous_enable=YES
+# Modo anónimo sin contraseña
+no_anon_password=YES
+# Parámetros del modo anónimo
+anon_mkdir_write_enable=NO
+anon_other_write_enable=NO
+anon_upload_enable=NO
+
+# Tráfico de bajada de 100KB/s
+anon_max_rate=10000
+
+
+2.- USUARIOS LOCALES
+A) Crear usuario local pepegomez con contraseña pepegomez
+sudo adduser pepegomez  (Debería de comprobar que está en /etc/passwd)
+Le doy permisos: 	sudo chmod -R +777 pepegomez
+
+B) Luego desde el cliente crear fichero de texto llamado texto1.txt y acceder con el usuario pepegomez y crear un directorio llamado documentos para subir el fichero.   (CLIENTE)
+	touch texto1.txt
+sftp pepegomez@tu_servidor
+mkdir documentos
+put texto1.txt documentos/
+
+﻿3.- USUARIOS VIRTUALES
+
+A) Crea el grupo virtualftp de usuari@s virtuales de ftp, el directorio /bin/virtualftp e incluye este último como shell en el fichero /etc/shells.
+sudo groupadd virtualftp
+sudo mkdir -p /bin/virtualftp
+sudo sh -c 'echo "/bin/virtualftp" >> /etc/shells'
+	sudo nano /etc/shells  → añadir linea: /bin/virtualftp
+
+B) Crea la usuaria virtual de ftp: rosaperez (su contraseña será el mismo nombre de usuario), que pertenecerá al grupo virtualftp creado. OJO!!!!! Dado que será la encargada de gestionar el sitio www.webpepegomez.tic.sa, haz que su home sea el directorio de dicho sitio web, y proporciona los permisos pertinentes para que pueda subir y bajar ficheros a dicho directorio.
+sudo useradd -g virtualftp -d /var/www/html/webpepegomez -s /bin/virtualftp/rosaperez rosaperez
+
+sudo chown -R rosaperez:virtualftp /var/www/html/webpepegomez
+sudo chmod -R 775 /var/www/html/webpepegomez
+
+C) Crea elusuario virtual de ftp: juangarcia (su contraseña será el mismo nombre de usuario), que pertenecerá al grupo virtualftp creado. Pese a que esta dado de alta como usuario virtual de ftp, actualmente no debe de poder acceder a el.
+	sudo useradd -g virtualftp -d /nonexistent -s /bin/virtualftp/juangarcia juangarcia
+	
+	sudo usermod -s /bin/false juangarcia → no se muy bien si funciona, tambien puedes acceder a /etc/shells y cambiarlo ahi
+
+
+4.- CÓMO PUEDO TRANSFORMAR EL SERVIDOR HTTP EN HTTPS UTILIZANDO EL CERTIFICADO PREDETERMINADO.
+sudo a2enmod ssl
+sudo nano /etc/apache2/sites-available/tu_sitio.conf
+<VirtualHost *:443>
+    ServerName tu_sitio.com
+    DocumentRoot /var/www/html/tu_sitio
+    
+    # Configuraciones SSL
+    SSLEngine on
+    SSLCertificateFile /etc/ssl/certs/ssl-cert-snakeoil.pem
+    SSLCertificateKeyFile /etc/ssl/private/ssl-cert-snakeoil.key
+</VirtualHost>
+
+5.- CÓMO PUEDO TRANSFORMAR EL SERVIDOR FTP EN FTPS CON EL CERTIFICADO PREDETERMINADO Y OBLIGANDO A  QUE TODO ACCESO AL SERVIDOR SEA POR FTPS
+sudo nano /etc/vsftpd.conf
+
+# Activar FTPS
+ssl_enable=YES
+rsa_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+rsa_private_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+
+# Obligar a usar FTPS
+force_local_data_ssl=YES
+force_local_login_ssl=YES
+
+
+
+—-------------------------------------------------------------------------------------------------
+—-------------------------------------------------------------------------------------------------
+—-------------------------------------------------------------------------------------------------
+
+SERVIDOR HTTP
+
+ 1.- INSTALAR SERVICIO HTTP, APACHE
+sudo apt-get install Apache2
+
+apache2 -v
+
+systemctl status apache2.service
+
+1.2.- COMPROBAR QUE TENGO 
+	Archivo: index.html → Directorio:  /var/www/html/
+	Archivo: sites-available y sites-enable → Directorio: /etc/apache2/www/
+
+1.3.- COPIAR 
+copiamos el archivo de index de la página en: 
+	cp indexar.html index2
+
+
+2.- ACCEDEMOS A LA PÁGINA WEB
+Ponemos en el buscador la dirección IP del servidor. 					
+Debe devolver una página web:
+
+
+3.-CREAR ARCHIVO DE CONFIGURACIÓN DEL DOMINIO	
+Copio el archivo sites-available y le pones el nombre de la pagina
+cp -r /etc/apache2/sites-available www.starwars.edu.conf
+
+3.1.-CONFIGURAR ARCHIVO DE CONFIGURACIÓN DEL DOMINIO
+   Dentro del archivo www.starwars.edu.conf ponemos:
+<VirtualHost *:80>
+    DocumentRoot “/var/www/starwars”
+    ServerName www.starwars.edu
+    <Directory “/var/www/starwars”>
+        allow from all
+        Options None
+        Require all granted
+    </Directory>
+    Directoryindex index.html
+</VirtualHost>
+
+.- HABILITAR ARCHIVO DE CONFIGURACIÓN DEL DOMINIO
+
+a2ensite www.starwars.edu.conf 
+
+Para aplicar la configuración reiniciamos con: 
+	systemctl reload apache2
+
+
+
+
+
+COPIO LOS PASOS DE LA FOTO Y AÑADO LA DESHABILITACIÓN DEL ARCHIVO ANTERIOR DE CONFIGURAR Y HABILITAR EL NUEVO
+
+1º deshabilito: a2dissite 000-default.conf
+2º  habilito: a2ensite www.starwars.edu.conf 
+                  systemctl reload apache2
+—-------------------------------------------------------------------------------------------------
+—-------------------------------------------------------------------------------------------------
+—-------------------------------------------------------------------------------------------------
+
+SERVIDOR FTP
+
+0.- Configuración de la red
+-Interfaz virtual
+-Asignación de la Interfaz de red mediante MAC
+
+1.- INSTALAR VSFTPD
+	sudo apt -y install vsftpd
+
+1.1.- COMPROBAR SI ESTÁ INSTALADO
+	apt-cache search vsftpd
+
+2.- COMPROBACIÓN ESTADO SERVICIO INSTALADO Y DEL FIREWALL.
+systemctl status vsftpd
+systemctl status ufw
+	ufw status
+2.1.-LISTAR APLICACIONES PERMITIDAS POR UFW
+	vfw app list
+
+2.2.-HABILITAR APLICACIÓN EN UFW
+ufw allow ftp
+
+2.3.-HABILITAR RANGO DE PUERTOS EN UFW
+	ufw allow 30000:30050/tcp
+
+2.3.-ACTIVAR UFW
+	enable 
+
+
+3.- CONFIGURAR VSFTPD
+Dentro del archivo de configuración: nano /etc/vsftpd.conf
+
+3.1- ACTIVAR MODO PASIVO Y DEFINIR LOS PUERTOS
+		pasv_enable=YES
+		pasv_min_port=30000
+		pasv_max_port=30050
+
+
+
+
+3.2.- OPCIONES DE PERSONALIZACIÓN
+
+3.2.1.- ENJAULAR USUARIO LOCAL A CARPETA PERSONAL
+ Descomentar:
+#chroot_local_user=YES
+
+-Añadir:
+allow_writeable_chroot=YES
+
+3.2.2.- PERMITIR AL USUARIO QUE MODIFIQUE FICHEROS
+-Descomentar:
+	#write_enable=YES   →    write_enable=YES
+
+3.2.3.- PERMITIR ACCESO ANONIMO
+-Cambiar:
+	anonymous_enable=NO    →    anonymous_enable=YES
+-Para permitir que entre sin contraseña:
+	no_anon_password=YES
+
+3.2.4.- PERMITIR CONEXIÓN SIN ENCRIPTAR
+force_local_logins_ssl=NO 
+force_local_data_ssl=NO
+
+3.2.5.- LIMITE DE TIEMPO DE SESIÓN 
+idle_session _timeout=180
+
+3.2.5.- LIMITE DE TIEMPO DE SESIÓN 
+local_max_rate=50000 —> Usuario local del servidor
+anon_max_rate=50000 —> Usuario anónimo 
+
+3.2.6.- PERMISO DE SUBIDA DE ARCHIVOS
+local_max_rate=50000 —> Usuario local del servidor
+anon_max_rate=50000 —> Usuario anónimo 
+
+3.2.7.- INDICA EL PUERTO DE ESCUCHA DEL SERVIDOR
+listen_address=172.16.1.1
+
+
+3.3.- CONFIGURAR FTPS
+Dentro de /etc/vsftpd.conf 
+
+3.3.1.- HABILITAR SSL
+Cambiar:
+	ssl_enable=NO    →      ssl_enable=YES
+
+3.3.2.- INDICAR UBICACIÓN DE CERTIFICADO Y CLAVE RSA
+rsa_cert_file= /etc/ssl/certs/ssl-cert- .pe 	
+rsa_private_key_file= /etc/ssl/private/ssl-cert- .key
+
+3.3.3.- INDICAR PROTOCOLO DE CONEXIÓN
+Escribir:
+	ssl_tlsv1=YES
+	ssl_sslv2=NO
+	ssl_ssl-3=NO
+
+
+3.4.- COMPROBAR SINTAXIS
+vsftpd 
+	
+
+4.-CREAR USUARIOS VIRTUALES
+
+4.1.- CREAR GRUPO DE TODOS LOS USUARIOS VIRTUALES FTP
+	groupadd grupoftp
+
+4.2.- CREAR EL HOME DEL NUEVO USUARIO FTP VIRTUAL
+	mkdir -p /home/grupoftp/mario
+
+4.3.- CREAR SHELL FANTASMA E INCLUIRLO EN /ETC/SHELLS
+	sudo userdd -g grupoftp -d /home/grupoftp/pepe -s /bin/grupoftp pepe
+			debe salir un warning					
+
+5.- REINICIAR EL SERVIDOR VSFTPD
+	systemctl restart vsftpd
+
+
+
+
+
+
+
+
+
+—-------------------------------------------------------------------------------------------------
+—-------------------------------------------------------------------------------------------------
+—-------------------------------------------------------------------------------------------------
+APUNTES HTTP ARCHIVO
+
+SITIO WEB SEGURO (HTTPS) CON CERTIFICADO PREDETERMINADO.
+1. COMPROBAR EXISTENCIA DE SITIO WEB PREDETERMINADO HTTPS.
+ls /etc/apache2/sites-available → default-ssl.conf
+1.1.OBSERVACIONES IMPORTANTES
+sudo nano default-ssl.conf
+1.1.1.PUERTO DE ESCUCHA HTTPS
+443
+1.1.2.UBICACIÓN DEL DOCUMENTO INICIO DEL SITIO WEB SEGURO POR DEFECTO.
+DocumentRoot /var/www/html
+1.1.3.UTILIZACIÓN DEL CERTIFICADO DIGITAL GENERADO DE FORMA PREDETERMINADA.
+SSLCertificateFile
+SSLCertificateKeyFile
+
+2. HABILITAR EL SITIO WEB PREDETERMINADO HTTPS.
+2.1. HABILITAR EL MÓDULO SSL PARA APACHE.
+$sudo a2enmod ssl
+2.2. HABILITAR EL SITIO WEB PREDETERMINADO HTTPS.
+$sudo a2ensite default-ssl
+2.3. REINICIAR SERVICIO APACHE PARA APLICAR LA CONFIGURACIÓN.
+$sudo systemctl restart apache2
+3. COMPROBAR DESDE EL CLIENTE EL ACCESO AL SITIO WEB SEGURO.
+3.1. ABRIR NAVEGADOR EN CLIENTE Y ACCEDER A LA IP DEL SERVIDOR, CON EL PROTOCOLO HTTPS.
+3.2. LA PRIMERA VEZ QUE SE ACCEDE, SALDRÁ UN ERROR DE CERTIFICADO (YA QUE NO POSEE UNA FIRMA
+autorizada por una autoridad certificadora – CA).
+NUEVO SITIO VIRTUAL DE ACCESO SEGURO CON CERTIFICADO POR
+DEFECTO.
+1. SE HACE UNA COPIA DEL FICHERO QUE DEFINE EL SITIO WEB PREDETERMINADO (EL NUEVO SITIO VIRTUAL DE ACCESO
+seguro se llamará www.starwars.edu-ssl.conf).
+Cp 000-default-ssl.conf www.starwars.edu-ssl.conf
+2. SE MODIFICA EL CONTENIDO DEL FICHERO WWW.STARWARS.EDU-SSL.CONF.
+$sudo nano www.starwars.edu-ssl.conf
+2.1. NOMBRE DEL SERVIDOR.
+ServerName www.starwars.edu
+2.2.UBICACIÓN DEL DOCUMENTO DE INICIO DEL SITIO SEGURO.
+DocumentRoot /var/www.starwars-seg
+
+UBICACIÓN DE LOS FICHEROS DE LOG.
+Errorlog /var/www/starwars-seg/error.log
+Customlog /var/www/starwars-seg/access.log combined
+2.1. UTILIZACIÓN DEL CERTIFICADO DIGITAL GENERADO DE FORMA PREDETERMINADA.
+
+-Lo dejamos igual-
+SSLCertificateFile
+
+SLCertificateKeyFile
+3. SE CREA EL DIRECTORIO STARWARS-SEG EN /VAR/WWW.
+$sudo mkdir /var/www/starwars-seg
+
+4. DENTRO DEL DIRECTORIO CREADO, SE CREA EL ARCHIVO INDEX.HTML Y SE INCLUYE EL CÓDIGO HTML DE LA PÁGINA.
+$sudo nano index.html
+4.1. COMPROBAR DESDE EL CLIENTE EL ACCESO AL SITIO WEB SEGURO.
+4.2. EN EL CLIENTE, MODIFICAR EL FICHERO /ETC/HOSTS PARA RESOLVER EL NOMBRE DEL SERVIDOR.
+4.2.1.SE ENTRA A EDITAR EL FICHRO /ETC/HOSTS.
+4.2.2.SE INCLUYE LA LÍNEA CORRESPONDIENTE.
+4.3. ABRIR NAVEGADOR EN CLIENTE Y ACCEDER A LA IP DEL SERVIDOR, CON EL PROTOCOLO HTTPS.
+4.4. LA PRIMERA VEZ QUE SE ACCEDE, SALDRÁ UN ERROR DE CERTIFICADO (YA QUE NO POSEE UNA FIRMA
+
+
+
+
+
+NUEVO SITIO VIRTUAL DE ACCESO SEGURO CON CERTIFICADO
+AUTOFIRMADO.
+NOTA: Partimos del sitio virtual creado en el apartado anterior, pero vamos a utilizar un certificado
+autofirmado
+1. SE PASA A USUARIO ROOT.
+$Sudo su
+2. SE ENTRA EN EL DIRECTORIO /ETC/SSL.
+#cd /etc/ssl
+3. SE GENERA PAR DE CLAVES PÚBLICA-PRIVADA.
+#openssl genrsa -[A1]out ./private/starwars.key.pem [A2]2048
+4. (NO NECESARIO) SE EXTRAE LA CLAVE PÚBLICA GENERADA.
+#openssl rsa -in starwar.key.pem -pubot > starwars.public.key.pub
+5. SE GENERA EL CERTIFICADO PROPIO.
+6. SE FIRMA EL CERTIFICADO PROPIO.
+6.1. (EN UN CASO REAL, LO DEBERÍA FIRMAR UNA ENTIDAD CERTIFICADORA.).
+6.2. EN ESTA PRÁCTICA SE AUTOFIRMA, ES DECIR, SE FIRMA CON LA PROPIA CLAVE PRIVADA GENERADA
+ANTERIORMENTE (CON LO CUAL, SE ESTÁ SIMULANDO QUE NOSOTR@S MISM@S SOMOS NUESTRA PROPIA
+AUTORIDAD CERTIFICADORA).
+7. SE INDICA EL USO DEL CERTIFICADO DIGITAL CREADO AUTOFIRMADO.
+
+7.1. SE EDITA Y MODIFICA EL FICHERO DEL SITIO VIRTUAL. /etc/apache2/sites-available/www.starwars.edu-
+ssl.conf para indicar el uso de dicho certificado.
+
+7.2. SE COMPRUEBA EN EL NAVEGADOR CLIENTE LA INFORMACIÓN REFERENTE AL CERTIFICADO EMPLEADO.
+7.3. ABRIR NAVEGADOR EN CLIENTE Y ACCEDER AL SITIO WEB SEGURO CON CERTIFICADO AUTOFIRMADO.
+[A1]Donde voy a guardar la clave
+[A2]No de bits
+
